@@ -58,8 +58,8 @@ def get_values(trials: list[optuna.trial.FrozenTrial]) -> float:
 
 
 if __name__ == "__main__":
-    n_trials = 11
-    n_seeds = 1
+    n_trials = 200
+    n_seeds = 10
     values = {"gp/disc": [], "gp/cont": [], "botorch/disc": [], "botorch/cont": []}
     runtimes = {"gp/disc": [], "gp/cont": [], "botorch/disc": [], "botorch/cont": []}
     for seed in range(n_seeds):
