@@ -69,7 +69,7 @@ if __name__ == "__main__":
             values[key].append(get_values(trials))
             runtimes[key].append(get_runtimes(trials))
 
-    with open("runtimes.json", mode="w") as f:
-        json.dump(runtimes, f)
-    with open("values.json", mode="w") as f:
-        json.dump(values, f)
+        with open("runtimes.json", mode="w") as f:
+            json.dump(runtimes, f)
+        with open("values.json", mode="w") as f:
+            json.dump(values, f)
