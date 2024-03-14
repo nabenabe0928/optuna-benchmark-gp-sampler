@@ -48,12 +48,12 @@ def optimize(n_trials: int, seed: int, sampler_name: str, deterministic: bool) -
     return study.trials
 
 
-def get_runtimes(trials: list[optuna.trial.FrozenTrial]) -> float:
+def get_runtimes(trials: list[optuna.trial.FrozenTrial]) -> list[float]:
     datetime_start = trials[0].datetime_start
-    return [(t.datetime_complete - datetime_start).microseconds * 1e-6 for t in trials]
+    return [(t.datetime_complete - datetime_start).total_seconds() for t in trials]
 
 
-def get_values(trials: list[optuna.trial.FrozenTrial]) -> float:
+def get_values(trials: list[optuna.trial.FrozenTrial]) -> list[float]:
     return [t.value for t in trials]
 
 
