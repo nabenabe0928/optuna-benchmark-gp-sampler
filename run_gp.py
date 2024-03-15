@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from hpolib import HPOLib
@@ -30,11 +31,13 @@ def rotated_ellipsoid(trial: optuna.Trial) -> float:
 
 
 def optimize(n_trials: int, seed: int, sampler_name: str, deterministic: bool) -> list[optuna.trial.FrozenTrial]:
-    assert sampler_name in ["gp", "botorch"]
+    assert sampler_name in ["gp", "botorch", "rand"]
     if sampler_name == "gp":
         sampler = optuna.samplers.GPSampler(seed=seed, deterministic_objective=deterministic)
     elif sampler_name == "botorch":
         sampler = optuna.integration.BoTorchSampler(seed=seed)
+    elif sampler_name == "rand":
+        sampler = optuna.samplers.RandomSampler(seed=seed)
     else:
         assert False, f"Got an unknown name {sampler_name}."
 
@@ -60,14 +63,38 @@ def get_values(trials: list[optuna.trial.FrozenTrial]) -> list[float]:
 if __name__ == "__main__":
     n_trials = 200
     n_seeds = 10
-    values = {"gp/disc": [], "gp/cont": [], "botorch/disc": [], "botorch/cont": []}
-    runtimes = {"gp/disc": [], "gp/cont": [], "botorch/disc": [], "botorch/cont": []}
+    value_file_path = "values.json"
+    runtime_file_path = "runtimes.json"
+    keys = ["gp/disc", "gp/cont", "botorch/disc", "botorch/cont", "rand/disc", "rand/cont"]
+
+    if os.path.exists(runtime_file_path):
+        runtimes = json.load(open(runtime_file_path))
+        values = json.load(open(value_file_path))
+        values.update({k: [] for k in keys if k not in values})
+        runtimes.update({k: [] for k in keys if k not in runtimes})
+    else:
+        runtimes = {k: [] for k in keys}
+        values = {k: [] for k in keys}
+
+    setups = [
+        ("gp", True),
+        ("gp", False),
+        ("rand", True),
+        ("rand", False),
+        ("botorch", True),
+        ("botorch", False),
+    ]
     for seed in range(n_seeds):
-        for (name, det) in [("gp", True), ("gp", False), ("botorch", True), ("botorch", False)]:
-            trials = optimize(n_trials=n_trials, seed=seed, sampler_name=name, deterministic=det)
+        for (name, det) in setups:
             key = f"{name}/{'cont' if det else 'disc'}"
+            if seed + 1 <= len(values[key]):
+                print(f"Skip {name=} with {det=} on {seed=}.")
+                continue
+
+            trials = optimize(n_trials=n_trials, seed=seed, sampler_name=name, deterministic=det)
             values[key].append(get_values(trials))
-            runtimes[key].append(get_runtimes(trials))
+            if name != "rand":
+                runtimes[key].append(get_runtimes(trials))
 
         with open("runtimes.json", mode="w") as f:
             json.dump(runtimes, f)
